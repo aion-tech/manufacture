@@ -13,6 +13,11 @@ class MrpPlannedOrder(models.Model):
 
     name = fields.Char(string="Description")
     origin = fields.Char(string="Source Document")
+    origin_sale_order_ids = fields.Many2many(
+        comodel_name="sale.order",
+        string="Origin Sale Orders",
+        readonly=True,
+    )
     product_mrp_area_id = fields.Many2one(
         comodel_name="product.mrp.area",
         string="Product MRP Area",
@@ -81,6 +86,10 @@ class MrpPlannedOrder(models.Model):
         related="product_mrp_area_id.mrp_planner_id",
         readonly=True,
         store=True,
+    )
+    origin_mrp_move_id = fields.Many2one(
+        comodel_name="mrp.move",
+        string="Origin MRP Move",
     )
 
     def _compute_mrp_production_count(self):

@@ -105,6 +105,7 @@ class MultiLevelMrp(models.TransientModel):
             "name": order_number,
             "origin": order_origin,
             "state": move.state,
+            "origin_sale_order_ids": [(6, 0, move.sale_line_id.order_id.ids)],
         }
 
     @api.model
@@ -120,6 +121,10 @@ class MultiLevelMrp(models.TransientModel):
             "qty_released": 0.0,
             "name": "Planned supply for: " + name,
             "origin": values.get("origin") or name,
+            "origin_sale_order_ids": [(6, 0, values.get("origin_sale_order_ids"))]
+            if values.get("origin_sale_order_ids")
+            else False,
+            "origin_mrp_move_id": values.get("origin_mrp_move_id", False),
             "fixed": False,
         }
 
@@ -147,6 +152,11 @@ class MultiLevelMrp(models.TransientModel):
             / bomline.bom_id.product_qty
         )
         line_quantity = factor * bomline.product_qty
+        origin_sale_order_ids = (
+            [(6, 0, values.get("origin_sale_order_ids"))]
+            if values.get("origin_sale_order_ids")
+            else False
+        )
         return {
             "mrp_area_id": product.mrp_area_id.id,
             "product_id": bomline.product_id.id,
@@ -170,6 +180,7 @@ class MultiLevelMrp(models.TransientModel):
                 "Demand Bom Explosion: Demand Bom Explosion: ", "Demand Bom Explosion: "
             ),
             "origin": planned_order.origin if planned_order else values.get("origin"),
+            "origin_sale_order_ids": origin_sale_order_ids,
         }
 
     @api.model
@@ -544,6 +555,7 @@ class MultiLevelMrp(models.TransientModel):
         onhand = product_mrp_area.qty_available
         grouping_delta = product_mrp_area.mrp_nbr_days
         demand_origin = []
+        origin_sale_order_ids = []
         for move in product_mrp_area.mrp_move_ids:
             if self._exclude_move(move):
                 continue
@@ -566,13 +578,19 @@ class MultiLevelMrp(models.TransientModel):
                     delta_days=grouping_delta,
                 )
                 origin = ",".join(list({x for x in demand_origin if x}))
+                if move.origin_sale_order_ids:
+                    origin_sale_order_ids.append(move.origin_sale_order_ids.ids)
                 qtytoorder = product_mrp_area.mrp_minimum_stock - onhand - last_qty
                 cm = self.create_action(
                     product_mrp_area_id=product_mrp_area,
                     mrp_date=last_date,
                     mrp_qty=qtytoorder,
                     name=name,
-                    values=dict(origin=origin),
+                    values=dict(
+                        origin=origin,
+                        origin_sale_order_ids=origin_sale_order_ids,
+                        origin_mrp_move_id=move.id,
+                    ),
                 )
                 qty_ordered = cm.get("qty_ordered", 0.0)
                 onhand = onhand + last_qty + qty_ordered
@@ -580,6 +598,7 @@ class MultiLevelMrp(models.TransientModel):
                 last_qty = 0.00
                 nbr_create += 1
                 demand_origin = []
+                origin_sale_order_ids = []
             if (
                 onhand + last_qty + move.mrp_qty
             ) < product_mrp_area.mrp_minimum_stock or (
@@ -595,6 +614,7 @@ class MultiLevelMrp(models.TransientModel):
                 onhand += move.mrp_qty
             if move.mrp_type == "d":
                 demand_origin.append(move.origin or move.name)
+                origin_sale_order_ids += move.origin_sale_order_ids.ids
 
         if last_date and last_qty != 0.00:
             name = _(
@@ -610,7 +630,10 @@ class MultiLevelMrp(models.TransientModel):
                 mrp_date=last_date,
                 mrp_qty=qtytoorder,
                 name=name,
-                values=dict(origin=origin),
+                values=dict(
+                    origin=origin,
+                    origin_sale_order_ids=origin_sale_order_ids,
+                ),
             )
             qty_ordered = cm.get("qty_ordered", 0.0)
             onhand += qty_ordered
@@ -655,7 +678,12 @@ class MultiLevelMrp(models.TransientModel):
                                     mrp_date=move.mrp_date,
                                     mrp_qty=qtytoorder,
                                     name=move.name or "",
-                                    values=dict(origin=move.origin or ""),
+                                    values=dict(
+                                        origin=move.origin or "",
+                                        origin_sale_order_ids=move.origin_sale_order_ids
+                                        and move.origin_sale_order_ids.ids,
+                                        origin_mrp_move_id=move.id,
+                                    ),
                                 )
                                 qty_ordered = cm["qty_ordered"]
                                 onhand += move.mrp_qty + qty_ordered

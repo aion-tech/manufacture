@@ -12,7 +12,7 @@
     "summary": "Adds an MRP Scheduler",
     "website": "https://github.com/OCA/manufacture",
     "category": "Manufacturing",
-    "depends": ["mrp", "purchase_stock", "mrp_warehouse_calendar"],
+    "depends": ["mrp", "sale", "purchase_stock", "mrp_warehouse_calendar"],
     "data": [
         "security/mrp_multi_level_security.xml",
         "security/ir.model.access.csv",
@@ -30,6 +30,7 @@
         "views/mrp_menuitem.xml",
         "data/mrp_multi_level_cron.xml",
         "data/mrp_area_data.xml",
+        "views/mrp_production_views.xml",
     ],
     "demo": [
         "demo/product_category_demo.xml",

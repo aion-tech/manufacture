@@ -64,6 +64,11 @@ class MrpMove(models.Model):
     )
     name = fields.Char(string="Description")
     origin = fields.Char(string="Source Document")
+    origin_sale_order_ids = fields.Many2many(
+        comodel_name="sale.order",
+        string="Origin Sale Orders",
+        readonly=True,
+    )
     parent_product_id = fields.Many2one(
         comodel_name="product.product", string="Parent Product", index=True
     )

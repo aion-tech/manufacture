@@ -142,6 +142,7 @@ class MrpInventoryProcureItem(models.TransientModel):
             "warehouse_id": self.warehouse_id,
             "group_id": group,
             "planned_order_id": self.planned_order_id.id,
+            "origin_sale_order_ids": self.planned_order_id.origin_sale_order_ids.ids,
         }
 
     @api.onchange("uom_id")

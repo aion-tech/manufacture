@@ -32,4 +32,6 @@ class StockRule(models.Model):
         )
         if "planned_order_id" in values:
             res["planned_order_id"] = values["planned_order_id"]
+        if "origin_sale_order_ids" in values:
+            res["origin_sale_order_ids"] = [(6, 0, values["origin_sale_order_ids"])]
         return res
