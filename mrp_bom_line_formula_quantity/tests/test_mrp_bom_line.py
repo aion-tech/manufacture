@@ -7,7 +7,7 @@ from odoo.fields import first
 from odoo.addons.mrp.tests.common import TestMrpCommon
 
 
-class TestMRPBoMLine(TestMrpCommon):
+class TestMRPBoMLime(TestMrpCommon):
     def test_formula_validation(self):
         """The formula of a BoM line is checked for not permitted operations."""
         # Arrange
